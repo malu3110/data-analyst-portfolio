@@ -1,23 +1,23 @@
-"""Print a real CBP snapshot and recent BTS truck rows as gzip+base64 blocks.
+"""Save a real CBP snapshot and recent BTS truck rows to tests/fixtures/.
 
-Used once to create tests/fixtures/ from live data (this dev environment cannot
-reach the sources directly; GitHub Actions can). Decode with scripts/decode_fixture.py.
+Run by .github/workflows/capture-fixtures.yml, which commits the files, so tests
+run against real source data rather than hand-made mocks.
 """
-import base64
-import gzip
 import json
+from pathlib import Path
 
 import requests
 
 HEADERS = {"User-Agent": "cross-border-wait-monitor (portfolio project)"}
 
 
+FIXTURES = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
+
+
 def emit(name: str, obj) -> None:
-    blob = base64.b64encode(gzip.compress(json.dumps(obj).encode())).decode()
-    print(f"BEGIN {name}")
-    for i in range(0, len(blob), 200):
-        print(blob[i : i + 200])
-    print(f"END {name}")
+    FIXTURES.mkdir(parents=True, exist_ok=True)
+    (FIXTURES / name).write_text(json.dumps(obj, indent=1) + "\n")
+    print(f"wrote {name}: {len(obj)} records")
 
 
 cbp = requests.get("https://bwt.cbp.gov/api/bwtnew", headers=HEADERS, timeout=60).json()
