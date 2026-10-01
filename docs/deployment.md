@@ -34,19 +34,22 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 
 ## 3. Make the schedule live
 
-Scheduled workflows only run from the repository's **default branch**.
+Scheduled workflows run from the repository's **default branch**, which is currently
+`claude/portfolio-logistics-data-scope-0s3g1g` (the only branch), so the schedule is
+already active. Until the secret from step 2 exists, the scheduled jobs skip with a
+notice instead of failing.
 
-1. Merge the working branch into `main` (or make the branch the default).
-2. **Actions** tab → enable workflows if prompted.
-3. Run once by hand to load data immediately:
+1. After adding the secret, open the **Actions** tab and run once by hand:
    - **ingest-bts-weekly** → *Run workflow* (loads BTS monthly truck data since 2015)
    - **ingest-hourly** → *Run workflow* (first CBP snapshot + dbt build)
-4. Both should go green. After that, `ingest-hourly` runs at minute 17 of every hour.
+2. Both should go green. After that, `ingest-hourly` runs at minute 17 of every hour.
+3. Optional tidy-up: create a `main` branch from this one (Settings → Branches →
+   rename, or a pull request) and make it the default. Use `main` in step 4 if you do.
 
 ## 4. Dashboard: Streamlit Community Cloud
 
 1. https://share.streamlit.io → **Create app** → *Deploy a public app from GitHub*.
-2. Repository: `malu3110/data-analyst-portfolio`, branch `main`,
+2. Repository: `malu3110/data-analyst-portfolio`, branch: the default branch,
    main file `app/streamlit_app.py`. Python 3.11+.
 3. **Advanced settings → Secrets**:
 

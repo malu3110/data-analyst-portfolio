@@ -17,16 +17,31 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
+      - name: Check configuration
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::DATABASE_URL secret not set; skipping (see docs/deployment.md step 2)"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
       - uses: actions/setup-python@v5
+        if: steps.cfg.outputs.ok == 'true'
         with:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+        if: steps.cfg.outputs.ok == 'true'
       - name: Ingest CBP snapshot
+        if: steps.cfg.outputs.ok == 'true'
         run: python -m pipeline.ingest_cbp
       - name: Derive dbt connection settings
+        if: steps.cfg.outputs.ok == 'true'
         run: python scripts/env_from_url.py
       - name: Transform and test (dbt)
+        if: steps.cfg.outputs.ok == 'true'
         working-directory: transform
         run: dbt build --profiles-dir .
