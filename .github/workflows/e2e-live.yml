@@ -1,0 +1,36 @@
+name: e2e-live
+# End-to-end smoke test against the LIVE sources: real CBP + BTS ingestion into
+# a throwaway Postgres, then the full dbt build. No secrets, no production data.
+# Two CBP captures a few minutes apart also exercise payload dedup.
+on:
+  workflow_dispatch:
+  push:
+    paths: ["pipeline/**", "transform/**", ".github/workflows/e2e-live.yml"]
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: ci, POSTGRES_PASSWORD: ci, POSTGRES_DB: ci }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -r requirements.txt
+      - run: python -m pipeline.ingest_bts
+      - run: python -m pipeline.ingest_cbp
+      - run: python -m pipeline.ingest_cbp
+      - run: python scripts/env_from_url.py
+      - name: dbt build
+        working-directory: transform
+        run: dbt build --profiles-dir .
+      - name: Summary
+        run: |
+          psql "$DATABASE_URL" -c "select job, status, rows_loaded, detail from raw.pipeline_run order by run_id"
+          psql "$DATABASE_URL" -c "select border, count(*) crossings, count(*) filter (where standard_status = 'reported' and not standard_is_stale) reporting_fresh_now from marts.mart_current_wait group by 1"
+          psql "$DATABASE_URL" -c "select reading_status, is_stale, count(*) from staging.stg_cbp__commercial_lane_readings group by 1, 2 order by 3 desc"
