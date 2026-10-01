@@ -1,0 +1,44 @@
+version: 2
+models:
+  - name: dim_crossing
+    description: One row per CBP crossing with latest attributes and BTS port volume.
+    columns:
+      - name: port_number
+        data_tests: [unique, not_null]
+
+  - name: mart_current_wait
+    description: Current commercial waits per crossing from the latest snapshot (US-01..03).
+    columns:
+      - name: port_number
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_crossing')
+                field: port_number
+
+  - name: mart_hourly_profile
+    description: Median and range of wait by crossing, lane and local hour (US-06).
+    columns:
+      - name: local_hour
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+                quote: false
+
+  - name: mart_fast_vs_standard
+    description: Paired standard-minus-FAST difference per crossing (US-08).
+    columns:
+      - name: port_number
+        data_tests: [unique]
+
+  - name: mart_truck_volume_monthly
+    description: BTS monthly inbound trucks by port (US-05).
+
+  - name: mart_pipeline_health
+    description: Daily capture success and data usability (success metrics §6.2).
+    columns:
+      - name: run_date
+        data_tests: [unique]

@@ -1,0 +1,27 @@
+name: border_waits
+version: "1.0.0"
+config-version: 2
+profile: border_waits
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+vars:
+  stale_after_minutes: 120     # US-09: older readings are excluded from statistics
+  min_readings_for_profile: 5  # US-06: below this, show "insufficient history"
+
+models:
+  border_waits:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: staging
+      +materialized: table
+    marts:
+      +schema: marts
+      +materialized: table
+seeds:
+  border_waits:
+    +schema: staging

@@ -1,0 +1,14 @@
+# Connection comes from environment variables so no secrets live in the repo.
+border_waits:
+  target: default
+  outputs:
+    default:
+      type: postgres
+      host: "{{ env_var('PGHOST') }}"
+      port: "{{ env_var('PGPORT', '5432') | int }}"
+      user: "{{ env_var('PGUSER') }}"
+      password: "{{ env_var('PGPASSWORD') }}"
+      dbname: "{{ env_var('PGDATABASE') }}"
+      sslmode: "{{ env_var('PGSSLMODE', 'prefer') }}"
+      schema: public
+      threads: 4

@@ -1,0 +1,7 @@
+version: 2
+models:
+  - name: int_lane_readings_unique
+    description: Each distinct reported CBP reading once (US-04).
+    columns:
+      - name: reading_key
+        data_tests: [unique, not_null]

@@ -1,0 +1,11 @@
+tz_abbrev,utc_offset_hours
+EST,-5
+EDT,-4
+CST,-6
+CDT,-5
+MST,-7
+MDT,-6
+PST,-8
+PDT,-7
+AKST,-9
+AKDT,-8

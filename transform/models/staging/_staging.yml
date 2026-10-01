@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: stg_cbp__crossings
+    description: One row per snapshot x crossing, attributes as reported by CBP.
+    columns:
+      - name: port_number
+        data_tests: [not_null]
+      - name: border
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["US-Mexico", "US-Canada"]
+
+  - name: stg_cbp__commercial_lane_readings
+    description: >
+      One row per snapshot x crossing x commercial lane type. Missing values stay
+      NULL (never 0); reading_status says why a value is missing (US-03).
+    columns:
+      - name: reading_id
+        data_tests: [unique, not_null]
+      - name: lane_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["standard", "fast"]
+      - name: reading_status
+        description: reported | closed | pending | not_applicable | unparsed
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["reported", "closed", "pending", "not_applicable", "unparsed"]
+      - name: delay_minutes
+        description: CBP's estimated minutes to reach primary inspection. NULL when not reported.
+      - name: cbp_updated_at
+        description: When CBP last updated this lane (UTC), date inferred from capture time.
+      - name: is_stale
+        description: True when the reading is older than var('stale_after_minutes') at capture (US-09).
+
+  - name: stg_bts__truck_crossings
+    columns:
+      - name: port_code
+        data_tests: [not_null]
+      - name: month
+        data_tests: [not_null]

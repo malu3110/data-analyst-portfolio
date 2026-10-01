@@ -1,0 +1,9 @@
+version: 2
+seeds:
+  - name: tz_abbreviations
+    description: >
+      UTC offsets for the time-zone abbreviations CBP appends to lane update times
+      (e.g. "At 2:00 pm CDT"). The abbreviation already encodes daylight saving.
+    columns:
+      - name: tz_abbrev
+        data_tests: [unique, not_null]

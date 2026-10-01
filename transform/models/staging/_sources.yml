@@ -1,0 +1,15 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: cbp_snapshot
+        description: One row per distinct CBP Border Wait Times response (full JSON array).
+        loaded_at_field: captured_at
+        freshness:
+          warn_after: { count: 2, period: hour }
+          error_after: { count: 6, period: hour }
+      - name: bts_truck_crossing
+        description: BTS Border Crossing Entry Data, measure = Trucks, monthly, inbound.
+      - name: pipeline_run
+        description: One row per ingestion job run, with status.
