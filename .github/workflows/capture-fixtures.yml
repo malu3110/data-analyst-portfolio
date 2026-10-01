@@ -1,8 +1,6 @@
 name: capture-fixtures
 on:
   workflow_dispatch:
-  push:
-    paths: ["scripts/capture_fixtures.py"]
 permissions:
   contents: write
 jobs:

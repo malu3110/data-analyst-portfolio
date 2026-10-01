@@ -1,0 +1,8 @@
+# Pipeline (ingestion + dbt) and dashboard. Dashboard-only deps: app/requirements.txt
+requests==2.34.2
+psycopg[binary]==3.2.13
+dbt-core==1.11.15
+dbt-postgres==1.11.0
+streamlit==1.64.0
+pandas==3.0.6
+altair==6.3.0

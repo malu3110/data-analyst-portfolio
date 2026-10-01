@@ -1,0 +1,32 @@
+name: ingest-hourly
+# Capture CBP's snapshot every hour, then rebuild and test the dbt models.
+# Minute 17: CBP refreshes around the top of the hour; also avoids GitHub's
+# busiest minute (scheduled runs can be delayed or, rarely, skipped; the
+# pipeline-health view measures this).
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Ingest CBP snapshot
+        run: python -m pipeline.ingest_cbp
+      - name: Derive dbt connection settings
+        run: python scripts/env_from_url.py
+      - name: Transform and test (dbt)
+        working-directory: transform
+        run: dbt build --profiles-dir .

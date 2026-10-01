@@ -59,10 +59,22 @@ job is accumulating history.
 
 ## What I (Rose) must do by hand — needs my accounts
 
-1. Create a free Neon project → copy the connection string.
-2. GitHub repo → Settings → Secrets and variables → Actions → add `DATABASE_URL`.
-3. share.streamlit.io → New app → this repo, `app/streamlit_app.py` → add `DATABASE_URL` secret.
-4. Merge the branch into `main` (scheduled workflows only run from the default branch).
+Neon database, GitHub secret, merge to `main`, Streamlit Cloud app. Step by step in
+[deployment.md](deployment.md).
+
+## Status (2026-10-01)
+
+| Day 1 item | Status |
+|---|---|
+| 0 Verify sources | Done: both live; real payloads captured as fixtures |
+| 1–3 Ingestion, raw schema, run log, BTS | Done, 15 pytest tests passing |
+| 4 dbt staging + marts + tests | Done, including the week-1 marts (hourly profile, FAST, health); 24 data tests + 1 unit test |
+| 5 Streamlit | Done: all six tabs, checked locally against synthetic history |
+| 6 Workflows | Done: hourly, weekly, CI |
+| 7 Neon + secret + Streamlit deploy | **Waiting on account setup** ([deployment.md](deployment.md)) |
+
+Week 1 is now mostly *letting history accumulate* and then writing up findings from
+real data. The views exist, but they only become meaningful as readings build up.
 
 ## Cut list (if time runs short, cut in this order)
 

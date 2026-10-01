@@ -1,0 +1,42 @@
+name: ci
+# Runs unit/integration tests and a full dbt build against real captured
+# fixtures in a throwaway Postgres; no secrets or production data involved.
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      TEST_DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_test
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: ci
+      PGPASSWORD: ci
+      PGDATABASE: ci
+      PGSSLMODE: disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: psql -c "CREATE DATABASE ci_test"
+      - name: pytest
+        run: python -m pytest -q
+      - name: Load real fixtures
+        run: python -m scripts.load_fixtures
+      - name: dbt build (models + data tests + unit tests)
+        working-directory: transform
+        run: dbt build --profiles-dir .

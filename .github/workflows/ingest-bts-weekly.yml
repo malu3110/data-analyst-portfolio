@@ -1,0 +1,29 @@
+name: ingest-bts-weekly
+# BTS publishes monthly with a lag; a weekly full refresh picks up new months and revisions.
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Ingest BTS truck crossings
+        run: python -m pipeline.ingest_bts
+      - name: Derive dbt connection settings
+        run: python scripts/env_from_url.py
+      - name: Transform and test (dbt)
+        working-directory: transform
+        run: dbt build --profiles-dir .

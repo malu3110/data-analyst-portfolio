@@ -8,3 +8,4 @@ transform/logs/
 transform/dbt_packages/
 .streamlit/secrets.toml
 logs/
+transform/.user.yml

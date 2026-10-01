@@ -3,9 +3,9 @@
 | | |
 |---|---|
 | **Author** | Rose |
-| **Version** | 0.1 (draft, written before any code) |
+| **Version** | 0.2 (v0.1 written before any code; v0.2 updates assumptions after source verification) |
 | **Date** | 2026-10-01 |
-| **Status** | Draft — data sources pending live verification (see §9) |
+| **Status** | Baseline for build. Data sources verified live 2026-10-01 (see §10) |
 
 > **About this document.** This is a personal portfolio project. There is no
 > client, no sponsor, and no stakeholders were interviewed. Everything below is
@@ -211,12 +211,15 @@ waits per crossing so that I can judge the value of FAST enrolment.*
   **then** it is listed as "No FAST lane" and excluded from the comparison.
 
 **US-09 — Stale readings**
-*As an analyst, I want readings flagged when CBP's update time hasn't changed
-so that frozen values don't distort statistics.*
-- **Given** a crossing's CBP update time has not advanced for 3 or more
-  consecutive captures,
-  **then** those readings are flagged `is_stale = true` and excluded from
-  typical-wait statistics.
+*As an analyst, I want old readings flagged so that frozen values don't
+distort statistics.*
+- **Given** a reading's CBP update time is more than 2 hours before the time we
+  captured it,
+  **then** the reading is flagged `is_stale = true` and excluded from
+  typical-wait statistics and from the "reporting now" counts.
+- *Changed in v0.2:* originally "update time unchanged for 3+ captures". Source
+  verification showed CBP can carry a reading from the previous day, so an
+  age-based rule catches staleness on the first capture.
 
 **US-10 — Failure noticed**
 *As the data owner, I want to be told when ingestion fails so that I can fix it
@@ -334,12 +337,15 @@ I will not claim any of these were achieved.
 ## 8. Assumptions
 
 - **A1.** CBP's feed remains public, free, unauthenticated, and permitted for
-  programmatic use. *(To verify — §9.)*
+  programmatic use. *(Verified reachable 2026-10-01; continued availability is R2.)*
 - **A2.** CBP's estimate (time to reach primary inspection) is an acceptable
   proxy for border delay. It is an estimate, and measurement methods may differ by port.
 - **A3.** CBP updates each crossing about hourly; hourly capture is sufficient.
-- **A4.** CBP's update times are expressed in the port's local time zone and
-  must be normalised to UTC. *(To verify — this affects every hourly statistic.)*
+- **A4.** ~~CBP's update times are in the port's local time zone.~~ **Resolved
+  2026-10-01:** each lane's update time is text like `"At 2:00 am PDT"`: local
+  time-of-day plus a zone abbreviation, **with no date**. The date is inferred
+  from capture time (a time later than "now" in that zone means the previous
+  day), then converted to UTC. Covered by a dbt unit test.
 - **A5.** BTS monthly Border Crossing Entry Data remains available via its open
   data API; its truck counts are inbound only and lag by some months.
 - **A6.** Free-tier hosting (GitHub Actions, a hosted Postgres free tier,
@@ -352,7 +358,7 @@ I will not claim any of these were achieved.
 
 | ID | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| R1 | **Data sources not yet verified live** (network blocked during scoping) | — | High | **Gate:** verify endpoints, fields and freshness before Day 1 build; switch to Option B (IMF PortWatch) if CBP is unusable |
+| R1 | ~~Data sources not yet verified live~~ **Closed 2026-10-01**: both verified from GitHub Actions; real payloads saved as test fixtures | — | — | — |
 | R2 | CBP changes or removes the feed / schema | Low–Med | High | Store raw JSON; schema check fails loudly (US-10) |
 | R3 | Scheduled runs delayed or skipped (GitHub cron is best-effort) | Med | Med | Dedupe on CBP update time; run-log gap report |
 | R4 | Short history (~1 week) → weak patterns | Certain | Med | Minimum-n rules (US-06), honest labelling; keep pipeline running |
@@ -367,8 +373,11 @@ I will not claim any of these were achieved.
 
 | Source | Content | Access | Cadence | Verified? |
 |---|---|---|---|---|
-| CBP Border Wait Times API (`bwt.cbp.gov/api/bwtnew`) | Current wait, lanes open, status per crossing and lane type | Public JSON, no key | ~Hourly | **Not yet** (blocked during scoping) |
-| BTS Border Crossing Entry Data (`data.bts.gov`, dataset `keg4-3bc2`) | Monthly inbound crossings by port and measure (e.g. Trucks) | Socrata open-data API | Monthly, lagged | **Not yet** |
+| CBP Border Wait Times API (`bwt.cbp.gov/api/bwtnew`) | Current wait, lanes open, status per crossing and lane type | Public JSON, no key | ~Hourly | **Yes**, 2026-10-01: 85 crossings, 53 with commercial lanes |
+| BTS Border Crossing Entry Data (`data.bts.gov`, dataset `keg4-3bc2`) | Monthly inbound crossings by port and measure (e.g. Trucks) | Socrata open-data API | Monthly, lagged | **Yes**, 2026-10-01: latest month 2026-08 |
+
+Join key: CBP's 6-digit `port_number` begins with BTS's 4-digit `port_code`
+(e.g. `300401` Blaine – Pacific Highway → `3004` Blaine).
 
 ## 11. Glossary
 
